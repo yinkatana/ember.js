@@ -74,8 +74,6 @@ import './@ember/error';
 
 import './@ember/helper';
 
-import './@ember/modifier';
-
 import './@ember/object';
 import './@ember/object/-private/action-handler';
 import './@ember/object/-private/types';
