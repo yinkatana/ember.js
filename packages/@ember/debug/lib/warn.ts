@@ -9,7 +9,10 @@ export interface WarnOptions {
 }
 
 export type RegisterHandlerFunc = (handler: HandlerCallback<WarnOptions>) => void;
-export type WarnFunc = (message: string, test?: boolean, options?: WarnOptions) => void;
+export interface WarnFunc {
+  (message: string, test: boolean, options?: WarnOptions): void;
+  (message: string, options?: WarnOptions): void;
+}
 
 let registerHandler: RegisterHandlerFunc = () => {};
 let warn: WarnFunc = () => {};

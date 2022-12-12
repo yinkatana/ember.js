@@ -22,14 +22,14 @@ interface Enabled extends Available {
 }
 
 export interface DeprecationOptions {
-  id: string;
+  id: `${string}.${string}`;
   until: string;
   url?: string;
   for: string;
   since: Available | Enabled;
 }
 
-export type DeprecateFunc = (message: string, test?: boolean, options?: DeprecationOptions) => void;
+export type DeprecateFunc = (message: string, test: boolean, options?: DeprecationOptions) => void;
 export type MissingOptionDeprecateFunc = (id: string, missingOption: string) => string;
 
 /**
@@ -130,8 +130,15 @@ if (DEBUG) {
 
       if (error instanceof Error) {
         if (error.stack) {
-          if ((error as any)['arguments']) {
-            // Chrome
+          // TODO: update this to drop the interface and just use `in`; we are
+          // preserving it as is for the current change *only* to make sure it
+          // preserves the existing runtime behavior exactly.
+          // Chrome
+          interface ChromeError extends Error {
+            arguments: unknown;
+          }
+
+          if ((error as ChromeError)['arguments']) {
             stack = error.stack
               .replace(/^\s+at\s+/gm, '')
               .replace(/^([^(]+?)([\n$])/gm, '{anonymous}($1)$2')
@@ -249,11 +256,11 @@ if (DEBUG) {
     test?: boolean,
     options?: DeprecationOptions
   ): void {
-    assert(missingOptionsDeprecation, Boolean(options && (options.id || options.until)));
-    assert(missingOptionsIdDeprecation, Boolean(options!.id));
-    assert(missingOptionDeprecation(options!.id, 'until'), Boolean(options!.until));
-    assert(missingOptionDeprecation(options!.id, 'for'), Boolean(options!.for));
-    assert(missingOptionDeprecation(options!.id, 'since'), Boolean(options!.since));
+    assert(missingOptionsDeprecation, options && (options.id || options.until));
+    assert(missingOptionsIdDeprecation, options.id);
+    assert(missingOptionDeprecation(options.id, 'until'), options.until);
+    assert(missingOptionDeprecation(options.id, 'for'), options.for);
+    assert(missingOptionDeprecation(options.id, 'since'), options.since);
 
     invoke('deprecate', message, test, options);
   };

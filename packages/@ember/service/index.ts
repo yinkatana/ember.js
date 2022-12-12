@@ -100,9 +100,3 @@ export default class Service extends FrameworkObject {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Registry extends Record<string, Service> {}
-
-declare module '@ember/owner' {
-  export interface DIRegistry {
-    service: Registry;
-  }
-}

@@ -1,6 +1,9 @@
 import { DEBUG } from '@glimmer/env';
 
-export type Options = object;
+export type Options = {
+  id: `${string}.${string}`;
+  until: string;
+};
 export type Handler<O extends Options> = (message: string, options?: O) => void;
 export type HandlerCallback<O extends Options> = (
   message: string,

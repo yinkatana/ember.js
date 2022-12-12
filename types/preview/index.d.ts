@@ -58,10 +58,6 @@ import './@ember/component/template-only';
 
 import './@ember/controller';
 
-import './@ember/debug';
-import './@ember/debug/container-debug-adapter';
-import './@ember/debug/data-adapter';
-
 import './@ember/destroyable';
 
 import './@ember/engine';
@@ -109,8 +105,6 @@ import './@ember/runloop';
 import './@ember/runloop/-private/backburner';
 import './@ember/runloop/-private/types';
 import './@ember/runloop/types';
-
-import './@ember/service';
 
 import './@ember/string';
 

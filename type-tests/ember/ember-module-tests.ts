@@ -132,7 +132,6 @@ expectTypeOf(Ember.typeOf('')).toEqualTypeOf<'string'>();
 // module import instead!
 expectTypeOf(Ember.typeOf(Ember.A())).toEqualTypeOf<'array'>();
 // warn
-// @ts-expect-error
 Ember.warn('be caseful!');
 Ember.warn('be caseful!', { id: 'some-warning' });
 // VERSION

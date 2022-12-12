@@ -24,7 +24,10 @@ export type DebugFunctionType =
   | 'runInDebug'
   | 'deprecateFunc';
 
-export type AssertFunc = (desc: string, condition?: unknown) => asserts condition;
+export interface AssertFunc {
+  (desc: string): never;
+  (desc: string, condition: unknown): asserts condition;
+}
 export type DebugFunc = (message: string) => void;
 export type DebugSealFunc = (obj: object) => void;
 export type DebugFreezeFunc = (obj: object) => void;
@@ -63,7 +66,7 @@ export type SetDebugFunction = {
 // These are the default production build versions:
 const noop = () => {};
 
-let assert: AssertFunc = noop;
+let assert: AssertFunc = noop as unknown as AssertFunc;
 let info: InfoFunc = noop;
 let warn: WarnFunc = noop;
 let debug: DebugFunc = noop;
@@ -71,8 +74,8 @@ let deprecate: DeprecateFunc = noop;
 let debugSeal: DebugSealFunc = noop;
 let debugFreeze: DebugFreezeFunc = noop;
 let runInDebug: RunInDebugFunc = noop;
-let setDebugFunction: SetDebugFunction = noop as any;
-let getDebugFunction: GetDebugFunction = noop as any;
+let setDebugFunction: SetDebugFunction = noop as unknown as SetDebugFunction;
+let getDebugFunction: GetDebugFunction = noop as unknown as GetDebugFunction;
 
 let deprecateFunc: DeprecateFuncFunc = function () {
   return arguments[arguments.length - 1];
@@ -165,11 +168,17 @@ if (DEBUG) {
     @public
     @since 1.0.0
   */
-  setDebugFunction('assert', function assert(desc, test) {
+
+  function assert(desc: string): never;
+  function assert(desc: string, test: unknown): asserts test;
+  // eslint-disable-next-line no-inner-declarations
+  function assert(desc: string, test?: unknown): void {
     if (!test) {
       throw new Error(`Assertion Failed: ${desc}`);
     }
-  });
+  }
+
+  setDebugFunction('assert', assert);
 
   /**
     Display a debug notice.
@@ -236,17 +245,17 @@ if (DEBUG) {
     @return {Function} A new function that wraps the original function with a deprecation warning
     @private
   */
-  setDebugFunction('deprecateFunc', function deprecateFunc(...args: any[]) {
+  setDebugFunction('deprecateFunc', function deprecateFunc(...args) {
     if (args.length === 3) {
-      let [message, options, func] = args as [string, DeprecationOptions, AnyFn];
+      let [message, options, func] = args;
       return function (this: any, ...args: any[]) {
         deprecate(message, false, options);
         return func.apply(this, args);
       };
     } else {
       let [message, func] = args;
-      return function (this: any) {
-        deprecate(message);
+      return function () {
+        deprecate(message, false);
         return func.apply(this, arguments);
       };
     }
