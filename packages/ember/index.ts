@@ -133,6 +133,20 @@ import type * as EmberTemplateCompiler from 'ember-template-compiler';
 import type { precompile, compile } from 'ember-template-compiler';
 import type * as EmberTesting from 'ember-testing';
 
+// Definition; types are below. This avoids emitting a `declare namespace { }`,
+// which our type publishing infra is not well-pleased with.
+function _inject() {
+  assert(
+    `Injected properties must be created through helpers, see '${Object.keys(inject)
+      .map((k) => `'inject.${k}'`)
+      .join(' or ')}'`
+  );
+}
+// ****@ember/controller****
+_inject.controller = injectController;
+// ****@ember/service****
+_inject.service = service;
+
 /**
   Namespace for injection helper methods.
 
@@ -141,17 +155,11 @@ import type * as EmberTesting from 'ember-testing';
   @static
   @public
 */
-function inject() {
-  assert(
-    `Injected properties must be created through helpers, see '${Object.keys(inject)
-      .map((k) => `'inject.${k}'`)
-      .join(' or ')}'`
-  );
-}
-// ****@ember/controller****
-inject.controller = injectController;
-// ****@ember/service****
-inject.service = service;
+const inject: {
+  (): void;
+  controller: typeof injectController;
+  service: typeof service;
+} = _inject;
 
 const PartialEmber = {
   isNamespace: true,

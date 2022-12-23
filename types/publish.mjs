@@ -45,97 +45,6 @@ import {
 import { builders as b, visit } from 'ast-types';
 import { parse, print } from 'recast';
 
-/**
-  Modules we know we are not ready to expose yet, mostly because they do not
-  have enough annotations on their internals to make the generated types clear
-  about what is public and what is private.
-
-  Notably, the modules will still be published, but they won't be visible to
-  consumers because the only way they *become* visible is by being included in
-  the set of type-only side effect imports, which excludes exactly these
-  modules.
- */
-const PREVIEW_MODULES = [
-  '@ember/canary-features/index.d.ts',
-  '@ember/component/helper.d.ts',
-  '@ember/component/index.d.ts',
-  '@ember/component/template-only.d.ts',
-  '@ember/deprecated-features/index.d.ts',
-  '@ember/destroyable/index.d.ts',
-  '@ember/helper/index.d.ts',
-  '@ember/instrumentation/index.d.ts',
-  '@ember/modifier/index.d.ts',
-  '@ember/polyfills/index.d.ts',
-  '@ember/polyfills/lib/assign.d.ts',
-  '@ember/renderer/index.d.ts',
-  '@ember/runloop/index.d.ts',
-  '@ember/service/index.d.ts',
-  '@ember/string/index.d.ts',
-  '@ember/string/lib/string_registry.d.ts',
-  '@ember/template-compilation/index.d.ts',
-  '@ember/template-factory/index.d.ts',
-  '@ember/template/index.d.ts',
-  '@ember/test/adapter.d.ts',
-  '@ember/test/index.d.ts',
-  '@ember/utils/index.d.ts',
-  '@ember/utils/lib/compare.d.ts',
-  '@ember/utils/lib/is_blank.d.ts',
-  '@ember/utils/lib/is_empty.d.ts',
-  '@ember/utils/lib/is_none.d.ts',
-  '@ember/utils/lib/is_present.d.ts',
-  '@ember/utils/lib/is-equal.d.ts',
-  '@ember/utils/lib/type-of.d.ts',
-  '@ember/version/index.d.ts',
-  '@glimmer/tracking/index.d.ts',
-  '@glimmer/tracking/primitives/cache.d.ts',
-  'ember-template-compiler/index.d.ts',
-  'ember-template-compiler/lib/plugins/assert-against-attrs.d.ts',
-  'ember-template-compiler/lib/plugins/assert-against-named-outlets.d.ts',
-  'ember-template-compiler/lib/plugins/assert-input-helper-without-block.d.ts',
-  'ember-template-compiler/lib/plugins/assert-reserved-named-arguments.d.ts',
-  'ember-template-compiler/lib/plugins/assert-splattribute-expression.d.ts',
-  'ember-template-compiler/lib/plugins/index.d.ts',
-  'ember-template-compiler/lib/plugins/transform-action-syntax.d.ts',
-  'ember-template-compiler/lib/plugins/transform-each-in-into-each.d.ts',
-  'ember-template-compiler/lib/plugins/transform-each-track-array.d.ts',
-  'ember-template-compiler/lib/plugins/transform-in-element.d.ts',
-  'ember-template-compiler/lib/plugins/transform-quoted-bindings-into-just-bindings.d.ts',
-  'ember-template-compiler/lib/plugins/transform-resolutions.d.ts',
-  'ember-template-compiler/lib/plugins/transform-wrap-mount-and-outlet.d.ts',
-  'ember-template-compiler/lib/plugins/utils.d.ts',
-  'ember-template-compiler/lib/system/bootstrap.d.ts',
-  'ember-template-compiler/lib/system/calculate-location-display.d.ts',
-  'ember-template-compiler/lib/system/compile-options.d.ts',
-  'ember-template-compiler/lib/system/compile.d.ts',
-  'ember-template-compiler/lib/system/dasherize-component-name.d.ts',
-  'ember-template-compiler/lib/system/initializer.d.ts',
-  'ember-template-compiler/lib/system/precompile.d.ts',
-  'ember-testing/index.d.ts',
-  'ember-testing/lib/adapters/adapter.d.ts',
-  'ember-testing/lib/adapters/qunit.d.ts',
-  'ember-testing/lib/ext/application.d.ts',
-  'ember-testing/lib/ext/rsvp.d.ts',
-  'ember-testing/lib/helpers.d.ts',
-  'ember-testing/lib/helpers/and_then.d.ts',
-  'ember-testing/lib/helpers/current_path.d.ts',
-  'ember-testing/lib/helpers/current_route_name.d.ts',
-  'ember-testing/lib/helpers/current_url.d.ts',
-  'ember-testing/lib/helpers/pause_test.d.ts',
-  'ember-testing/lib/helpers/visit.d.ts',
-  'ember-testing/lib/helpers/wait.d.ts',
-  'ember-testing/lib/initializers.d.ts',
-  'ember-testing/lib/setup_for_testing.d.ts',
-  'ember-testing/lib/test.d.ts',
-  'ember-testing/lib/test/adapter.d.ts',
-  'ember-testing/lib/test/helpers.d.ts',
-  'ember-testing/lib/test/on_inject_helpers.d.ts',
-  'ember-testing/lib/test/pending_requests.d.ts',
-  'ember-testing/lib/test/promise.d.ts',
-  'ember-testing/lib/test/run.d.ts',
-  'ember-testing/lib/test/waiters.d.ts',
-  'ember/index.d.ts',
-];
-
 const MODULES_PLACEHOLDER = '~~~MODULES GO HERE~~~';
 
 const BASE_INDEX_D_TS = `\
@@ -188,11 +97,30 @@ ${MODULES_PLACEHOLDER}
 
 const TYPES_DIR = path.join('types', 'stable');
 
+const MANUALLY_COPIED_D_TS_MODULES = [
+  {
+    input: 'packages/loader/lib/index.d.ts',
+    output: path.join(TYPES_DIR, 'require.d.ts'),
+  },
+  {
+    input: 'packages/ember-template-compiler/lib/types.d.ts',
+    output: path.join(TYPES_DIR, 'ember-template-compiler/lib/types.d.ts'),
+  },
+  {
+    input: 'packages/ember/version.d.ts',
+    output: path.join(TYPES_DIR, 'ember/version.d.ts'),
+  },
+];
+
 async function main() {
   fs.rmSync(TYPES_DIR, { recursive: true, force: true });
   fs.mkdirSync(TYPES_DIR, { recursive: true });
 
   spawnSync('yarn', ['tsc', '--project', 'tsconfig/publish-types.json']);
+
+  for (let { input, output } of MANUALLY_COPIED_D_TS_MODULES) {
+    fs.copyFileSync(input, output);
+  }
 
   // This is rooted in the `TYPES_DIR` so that the result is just the names of
   // the modules, as generated directly from the tsconfig above.
@@ -209,28 +137,12 @@ async function main() {
     }
   }
 
+  // Only publish the types we actually *want* to provide public API for, or
+  // which are necessary support paths (e.g. all the `-internal` paths, whose
+  // types are used in the public APIs). Use `/// <reference path="..." />`
+  // directives to make it clear that these are type-only references.
   let sideEffectModules = moduleNames
-    .filter((moduleName) => !PREVIEW_MODULES.includes(moduleName))
-    .map((moduleName) => {
-      // We need to import "package root" types as such, *not* via the actual
-      // module which provides them, or TS does not see them correctly via the
-      // side effect imports, so transform them accordingly:
-      //
-      //     `@ember/owner/index.d.ts` -> `@ember/owner`
-      //
-      // We also need to replace `.d.ts` entirely:
-      //
-      //     `@ember/utils/lib/compare.d.ts` -> `@ember/utils/lib/compare`
-      //
-      // Otherwise, the modules won't be resolved correctly via the side-effect
-      // imports.
-      let moduleOrPackagePath = moduleName.replace(/\/index.d.ts$/, '').replace('.d.ts', '');
-
-      // Then create a relative path *to* the path on disk so that the
-      // side-effect import is e.g. `import './@ember/owner';`, which makes it
-      // resolve the actual local file, *not* go looking for some other package.
-      return `import './${moduleOrPackagePath}';`;
-    })
+    .map((moduleName) => `/// <reference path="./${moduleName}" />`)
     .join('\n');
 
   let stableIndexDTsContents = BASE_INDEX_D_TS.replace(MODULES_PLACEHOLDER, sideEffectModules);
