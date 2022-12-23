@@ -749,6 +749,6 @@ export { RouterService as default, RouteInfo, RouteInfoWithAttributes };
 
 declare module '@ember/service' {
   export interface Registry {
-    router: RouterService;
+    router: RouterService<Route>;
   }
 }
