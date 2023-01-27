@@ -1,8 +1,7 @@
 import { assert } from '@ember/debug';
 import { onErrorTarget } from '@ember/-internals/error-handling';
 import { flushAsyncObservers } from '@ember/-internals/metal';
-import type { DeferredActionQueues } from 'backburner.js';
-import Backburner, { Timer } from 'backburner.js';
+import Backburner, { Timer, type DeferredActionQueues } from 'backburner.js';
 import type { AnyFn } from '@ember/-internals/utility-types';
 
 export { Timer };
@@ -86,6 +85,10 @@ export const _queues = [
   _rsvpErrorQueue,
 ];
 
+/**
+ * @internal
+ * @private
+ */
 export const _backburner = new Backburner(_queues, {
   defaultQueue: 'actions',
   onBegin,
