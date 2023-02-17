@@ -17,7 +17,7 @@ import { isProxy, lookupDescriptor } from '@ember/-internals/utils';
 import type { AnyFn } from '@ember/-internals/utility-types';
 import Controller from '@ember/controller';
 import type { ControllerQueryParamType } from '@ember/controller';
-import { assert, info, isTesting } from '@ember/debug';
+import { assert, deprecate, info, isTesting } from '@ember/debug';
 import EngineInstance from '@ember/engine/instance';
 import { dependentKeyCompat } from '@ember/object/compat';
 import { once } from '@ember/runloop';
@@ -65,6 +65,16 @@ type RouteTransitionState<R extends Route> = TransitionState<R> & {
 
 type MaybeParameters<T> = T extends AnyFn ? Parameters<T> : unknown[];
 type MaybeReturnType<T> = T extends AnyFn ? ReturnType<T> : unknown;
+
+interface StoreLike {
+  find(type: string, value: unknown): unknown;
+}
+
+function isStoreLike(store: unknown): store is StoreLike {
+  return (
+    typeof store === 'object' && store !== null && typeof (store as StoreLike).find === 'function'
+  );
+}
 
 export const ROUTE_CONNECTIONS = new WeakMap();
 const RENDER = Symbol('render');
@@ -1358,15 +1368,6 @@ class Route<T = unknown>
     export default Router;
     ```
 
-    The model for the `post` route is `store.findRecord('post', params.post_id)`.
-
-    By default, if your route has a dynamic segment ending in `_id`:
-
-    * The model class is determined from the segment (`post_id`'s
-      class is `App.Post`)
-    * The find method is called on the model class with the value of
-      the dynamic segment.
-
     Note that for routes with dynamic segments, this hook is not always
     executed. If the route is entered through a transition (e.g. when
     using the `link-to` Handlebars helper or the `transitionTo` method
@@ -1400,12 +1401,20 @@ class Route<T = unknown>
     if a promise returned from `model` fails, the error will be
     handled by the `error` hook on `Route`.
 
+    Note that the legacy behavior of automatically defining a model
+    hook when a dynamic segment ending in `_id` is present is deprecated.
+    You should explicitly define a model hook whenever any segments are
+    present.
+
     Example
 
     ```app/routes/post.js
     import Route from '@ember/routing/route';
+    import { service } from '@ember/service';
 
     export default class PostRoute extends Route {
+      @service store;
+
       model(params) {
         return this.store.findRecord('post', params.post_id);
       }
@@ -1479,8 +1488,23 @@ class Route<T = unknown>
     @param {Object} value the value passed to find
     @private
   */
-  findModel(...args: any[]) {
-    return (get(this, 'store') as any).find(...args);
+  findModel(type: string, value: unknown) {
+    deprecate(
+      `The implicit model loading behavior for routes is deprecated. ` +
+        `Please define an explicit model hook for ${this.fullRouteName}.`,
+      false,
+      {
+        id: 'deprecate-implicit-route-model',
+        for: 'ember-source',
+        since: { available: '4.12.0' },
+        until: '6.0.0',
+      }
+    );
+
+    const store = get(this, 'store');
+    assert('Expected route to have a store with a find method', isStoreLike(store));
+
+    return store.find(type, value);
   }
 
   /**
@@ -1499,8 +1523,11 @@ class Route<T = unknown>
 
     ```app/routes/photos.js
     import Route from '@ember/routing/route';
+    import { service } from '@ember/service';
 
     export default class PhotosRoute extends Route {
+      @service store;
+
       model() {
         return this.store.findAll('photo');
       }
