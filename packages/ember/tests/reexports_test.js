@@ -260,10 +260,6 @@ let allExports = [
   // @ember/object/proxy
   ['ObjectProxy', '@ember/object/proxy', 'default'],
 
-  // @ember/polyfills
-  ['assign', '@ember/polyfills', 'assign'],
-  ['platform.hasPropertyAccessors', '@ember/polyfills', 'hasPropertyAccessors'],
-
   // @ember/routing/auto-location
   ['AutoLocation', '@ember/routing/auto-location', 'default'],
 
