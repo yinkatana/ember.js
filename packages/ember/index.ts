@@ -92,7 +92,6 @@ import Observable from '@ember/object/observable';
 import { addObserver, removeObserver } from '@ember/object/observers';
 import ObjectProxy from '@ember/object/proxy';
 import PromiseProxyMixin from '@ember/object/promise-proxy-mixin';
-import { assign } from '@ember/polyfills';
 import AutoLocation from '@ember/routing/auto-location';
 import HashLocation from '@ember/routing/hash-location';
 import HistoryLocation from '@ember/routing/history-location';
@@ -359,9 +358,6 @@ const PartialEmber = {
   // ****@ember/object/proxy****
   ObjectProxy,
 
-  // ****@ember/polyfills****
-  assign,
-
   // ****@ember/routing/-internals****
   RouterDSL,
   controllerFor,
@@ -462,12 +458,6 @@ const PartialEmber = {
 
   // ****@ember/controller, @ember/service****
   inject,
-
-  // Non-imported
-  platform: {
-    defineProperty: true,
-    hasPropertyAccessors: true,
-  },
 
   __loader: {
     require,

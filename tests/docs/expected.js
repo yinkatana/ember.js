@@ -78,7 +78,6 @@ module.exports = {
     'array',
     'assert',
     'assertDestroyablesDestroyed',
-    'assign',
     'associateDestroyableChild',
     'asyncEnd',
     'asyncStart',
