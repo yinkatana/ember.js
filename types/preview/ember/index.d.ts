@@ -40,8 +40,6 @@ declare module 'ember' {
   import EmberArrayProxy from '@ember/array/proxy';
   import type EmberEnumerable from '@ember/array/-private/enumerable';
   import type EmberMutableEnumerable from '@ember/array/-private/mutable-enumerable';
-  // @ember/error
-  import type EmberError from '@ember/error';
 
   type EmberArray<T> = EmberArrayNs.default<T>;
   import type EmberActionHandler from '@ember/object/-private/action-handler';
@@ -125,11 +123,6 @@ declare module 'ember' {
     };
     class EngineInstance extends EmberEngineInstanceNs.default {}
     class Engine extends EmberEngineNs.default {}
-
-    /**
-     * A subclass of the JavaScript Error object for use in Ember.
-     */
-    const Error: ErrorConstructor;
 
     const Evented: typeof EmberObjectEventedNs.default;
     interface Evented extends EmberObjectEventedNs.default {}
