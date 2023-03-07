@@ -67,6 +67,31 @@ moduleFor(
       runDestroy(owner);
     }
 
+    ['@test default store is deprecated']() {
+      let owner = buildOwner();
+      setOwner(route, owner);
+
+      expectDeprecation(() => route.store, /The default store behavior for routes is deprecated./);
+
+      runDestroy(owner);
+    }
+
+    ['@test default store can be overridden'](assert) {
+      runDestroy(route);
+
+      let calledFind = false;
+      route = EmberRoute.extend({
+        store: {
+          find() {
+            calledFind = true;
+          },
+        },
+      }).create();
+
+      route.store.find();
+      assert.true(calledFind, 'store.find was called');
+    }
+
     ["@test assert if 'store.find' method is not found"]() {
       runDestroy(route);
 

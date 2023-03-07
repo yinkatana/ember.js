@@ -1501,7 +1501,9 @@ class Route<T = unknown>
       }
     );
 
+    this._disableStoreDeprecation = true;
     const store = get(this, 'store');
+    this._disableStoreDeprecation = false;
     assert('Expected route to have a store with a find method', isStoreLike(store));
 
     return store.find(type, value);
@@ -1832,6 +1834,14 @@ class Route<T = unknown>
   }
 
   /**
+   * Set to true to disable the built-in store deprecation warning.
+   * This helps avoid double calls from the `findModel` hook.
+   *
+   * @private
+   */
+  _disableStoreDeprecation = false;
+
+  /**
     Store property provides a hook for data persistence libraries to inject themselves.
 
     By default, this store property provides the exact same functionality previously
@@ -1843,10 +1853,23 @@ class Route<T = unknown>
 
     @property store
     @type {Object}
+    @deprecated Manually define your own store, such as with `@service store`
     @private
   */
   @computed
   protected get store() {
+    deprecate(
+      `The default store behavior for routes is deprecated. Please define an ` +
+        `explicit store for ${this.fullRouteName}, such as with \`@service store\`.`,
+      this._disableStoreDeprecation,
+      {
+        id: 'deprecate-defaul-route-store',
+        for: 'ember-source',
+        since: { available: '4.12.0' },
+        until: '6.0.0',
+      }
+    );
+
     const owner = getOwner(this);
     assert('Route is unexpectedly missing an owner', owner);
     let routeName = this.routeName;
